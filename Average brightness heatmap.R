@@ -1,5 +1,7 @@
 ### Make a heatmap of average brigthness of mutant and wt amino acids
 
+# average the brightness data across all variants in a 20x20 matrix showing the wild-type and target amino acids
+
 mutation_data1 <- mutation_data %>%
   rowwise() %>%
   mutate(mutation = {
