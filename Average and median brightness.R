@@ -5,6 +5,9 @@
 # Aaverage the brightness across all contexts, so if i.e. there were 3 unique(!) proteins containing the A23P mutation,
 # the averaged brightness of A23P is mean(brightness(protein1),brightness(protein2),brightness(protein3))
 
+# As a control for the averaged data across different sequences, create a subset of the dataset 
+# where only single-mutation sequences are considered.
+
 # Calculate differences between wt and mutant sequences
 substitution_distances <- function(s1, s2) {
   mapply(function(c1, c2) sum(c1 != c2), strsplit(s1, ""), strsplit(s2, ""))
