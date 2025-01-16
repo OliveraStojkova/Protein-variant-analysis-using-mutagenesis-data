@@ -101,3 +101,63 @@ vars_in_common <- intersect(unique_mutations_sar, unique_mutations_bd)
 cat("Number of Mutations Observed in Sarkasiyan GFP Dataset and Bright-Dim Datasets:", length(vars_in_common), "\n")
 cat("Number of Unique Mutations in Sarkasiyan GFP Dataset:", length(unique_mutations_sar), "\n")
 cat("Number of Unique Mutations in Bright-Dim GFP Dataset:", length(unique_mutations_bd), "\n")
+
+# Filter sarkisyan dataset so that only sequences with mutations that are present in both datasets are shown
+mutation_data_expanded <- mutation_data_filtered %>%
+  separate_rows(Mutations, sep = ",")%>%
+  drop_na(Mutations)
+
+common_mutations_df <- mutation_data_expanded %>%
+  filter(Mutations %in% vars_in_common)
+
+common_mutations_df <- common_mutations_df %>%
+  group_by(Mutations) %>%
+  summarize(no_observed = n(),
+            avg_brightness = mean(medianBrightness, na.rm=TRUE)) %>%
+  ungroup()
+
+## Plot average brightness vs. log(brigh/dim) for variants present in both datasets
+# Calculate log(bright/dim) ratio
+
+merged_data_bright_dim_filtered <- merge_bright_dim_datasets %>%
+  filter(Mutations %in% vars_in_common)
+
+merged_data_bright_dim_filtered <- merged_data_bright_dim_filtered %>%
+  group_by(Mutations) %>%
+  summarize(Count_in_Bright = mean(Counts_bright, na.rm = TRUE),
+            Count_in_Dim = mean(Counts_dim, na.rm = TRUE)) %>%
+  ungroup()
+
+# Pseudocount value (to avoid division by zero)
+pseudocount <- 1
+
+# Total counts for bright and dim
+total_bright <- sum(merged_data_bright_dim_filtered$Count_in_Bright) + pseudocount * nrow(merged_data_bright_dim_filtered)
+
+total_dim <- sum(merged_data_bright_dim_filtered$Count_in_Dim) + pseudocount * nrow(merged_data_bright_dim_filtered)
+
+# Add pseudocounts to both bright and dim counts to avoid zero counts
+merged_data_bright_dim_filtered$Count_in_Bright <- merged_data_bright_dim_filtered$Count_in_Bright + pseudocount
+merged_data_bright_dim_filtered$Count_in_Dim <- merged_data_bright_dim_filtered$Count_in_Dim + pseudocount
+
+# Calculate odds for each sequence using pseudocounts
+merged_data_bright_dim_filtered$odds_bright <- merged_data_bright_dim_filtered$Count_in_Bright / (total_bright - merged_data_bright_dim_filtered$Count_in_Bright)
+
+merged_data_bright_dim_filtered$odds_dim <- merged_data_bright_dim_filtered$Count_in_Dim / (total_dim - merged_data_bright_dim_filtered$Count_in_Dim)
+
+# Calculate log-odds ratio
+merged_data_bright_dim_filtered$log_odds_ratio <- log(merged_data_bright_dim_filtered$odds_bright / merged_data_bright_dim_filtered$odds_dim)
+
+# Merge datasets to plot
+merged_df <- merged_data_bright_dim_filtered %>%
+  left_join(common_mutations_df %>% select(Mutations, avg_brightness), by = "Mutations")
+
+# Plot
+ggplot(merged_df, aes(y = avg_brightness, x = log_odds_ratio)) +
+  geom_point(alpha = 0.7, color = "navy", size = 1) +
+  labs(
+    title = "Averaged Median Brightness vs. Log Odds Ratio",
+    y = "Average Median Brightness",
+    x = "Log Odds Ratio"
+  ) +
+  theme_minimal()
