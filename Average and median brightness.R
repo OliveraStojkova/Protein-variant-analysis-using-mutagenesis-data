@@ -1,4 +1,9 @@
 ### Calculate average brightness for each mutation
+# determine differences to the native protein sequence. For simplicity consider each position independently, i.e.,
+# regardless of whether this mutation was only observed in context of other mutations. So, if a protein with A23P and S84Q is
+# reported to have a medianBrightness of 3.5, then the brightness of A23P is 3.5 and the brightness of S84Q is 3.5 (in that protein).
+# Aaverage the brightness across all contexts, so if i.e. there were 3 unique(!) proteins containing the A23P mutation,
+# the averaged brightness of A23P is mean(brightness(protein1),brightness(protein2),brightness(protein3))
 
 # Calculate differences between wt and mutant sequences
 substitution_distances <- function(s1, s2) {
