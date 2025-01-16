@@ -1,70 +1,4 @@
----
-title: "NGS Assignment 3"
-author: "Olivera Stojkova"
-date: "2024-10-20"
-output: pdf_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r}
-library(ggplot2)
-library(Biostrings)
-library(pheatmap)
-library(tidyverse)
-library(reshape2)
-library(tidyr)
-library(dplyr)
-library(seqinr)
-library(pwalign)
-library(ggrepel)
-```
-
-```{r}
-# Read data
-mutation_data <- read.csv("nt_sequences_to_brightness.csv")
-wild_type_sequence <- readDNAStringSet("avGFP_reference_sequence.fa")
-```
-# Task 1
-## Quality control
-```{r}
-# Remove sequences that are too long, too short, or have gaps 
-# Keep sequences that are the same length as the wild-type DNA sequence
-mutation_data <- mutation_data[nchar(mutation_data$sequence) == nchar(wild_type_sequence), ]
-
-# Remove gaps (-)
-mutation_data <- mutation_data[!grepl("-", mutation_data$sequence), ]
-
-```
-
-## Translate sequences to protein
-```{r}
-wt_protein <- toString(translate(wild_type_sequence))
-
-mutation_data$protein <- as.character(lapply(mutation_data$sequence, function(s) toString(translate(DNAString(s)))))
-
-```
-
-```{r}
-# Remove sequences with premature stop codons (those that contain "*" anywhere in the sequence except the end)
-mutation_data <- mutation_data[!grepl("\\*", mutation_data$protein) | regexpr("\\*", mutation_data$protein) == nchar(mutation_data$protein), ]
-```
-
-## Number of uniques barcodes, DNA and protein sequences
-```{r}
-unique_barcodes <- length(unique(mutation_data$uniqueBarcodes))
-unique_DNA_variants <- length(unique(mutation_data$sequence))
-unique_protein_sequences <- length(unique(mutation_data$protein))
-
-cat("Unique barcodes:", unique_barcodes, "\n")
-cat("Unique DNA variants:", unique_DNA_variants, "\n")
-cat("Unique protein sequences:", unique_protein_sequences, "\n")
-```
-
 ## Determine the most common protein sequence that is not wild type and report the mutation(s) found in this sequence
-```{r}
 # Filter out protein sequences
 non_wt_protein <- mutation_data[mutation_data$protein != wt_protein, ]
 
@@ -91,11 +25,9 @@ mutations <- find_mutations(wt_protein, most_common_protein)
 cat("The most common non-wt protein sequence is: ", most_common_protein , "\n")
 cat("Mutation(s) in the most common non-wildtype protein sequence:", paste(mutations, collapse = ", "), "\n")
 
-```
-
-# Task 2
+######## Task 2
 ## Calculate average brightness for each mutation
-```{r}
+
 # Calculate differences between wt and mutant sequences
 substitution_distances <- function(s1, s2) {
   mapply(function(c1, c2) sum(c1 != c2), strsplit(s1, ""), strsplit(s2, ""))
@@ -181,10 +113,8 @@ single_mutantions <- single_mutants %>%
 
 single_mutants_df <- as.data.frame(single_mutantions)
 
-```
-
 ## Compare the median brightness of single-mutation sequences to the averaged data
-```{r}
+
 # Merge the two dataframes 
 comparison_df <- single_mutants_df %>%
   merge(mutation_summary, by = "mutation") 
@@ -202,9 +132,8 @@ ggplot(comparison_df, aes(x = medianBrightness, y = avg_brightness)) +
   geom_abline(slope = 1, intercept = 0, color = "blue", linetype = "dashed") +
   theme_minimal() 
 
-```
 ## Compare the median brightness of single-mutation sequences to the averaged data - filtered for data with more than 1 unique barcode
-```{r}
+
 # Filter the data to only keep the data for sequences that have more than 1 unique barcode
 mutation_data_filtered <- mutation_data%>%
   filter(uniqueBarcodes > 1)
@@ -288,10 +217,8 @@ ggplot(comparison_filtered_df, aes(x = medianBrightness, y = avg_brightness)) +
   ) +
   geom_abline(slope = 1, intercept = 0, color = "blue", linetype = "dashed") +
   theme_minimal()
-```
 
-# Task 3
-```{r}
+######## Task 3
 mutation_data1 <- mutation_data %>%
   rowwise() %>%
   mutate(mutation = {
@@ -367,10 +294,8 @@ ggplot(brightness_df, aes(y = mut_aa, x = wt_aa, fill = avg_brightness)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-```
 # Task 4
 ## 4.1 Compare native DNA with the reference DNA used above
-```{r}
 
 native_dna <- readDNAStringSet("native_DNA.fa")
 
@@ -401,10 +326,8 @@ alignment_protein_global <- pairwiseAlignment(pattern = wild_type_protein_nostri
 alignment_protein_local
 alignment_protein_global
 
-```
 
 ## 4.2 Compare differences between wild type sequence and GFP dataset
-```{r}
 # Load GFP datasets
 brightGFP_data <- read.table("bright_GFP_beads.counts", sep = "\t", stringsAsFactors = FALSE, , col.names = c("Counts", "Sequence"))
 dimGFP_data <- read.table("dim_GFP_beads.counts", sep = "\t", stringsAsFactors = FALSE, col.names = c("Counts", "Sequence"))
@@ -453,9 +376,7 @@ brightGFP_data$trimmed_protein <- sapply(brightGFP_data$protein, trim_protein, s
 dimGFP_data$trimmed_protein <- sapply(dimGFP_data$protein, trim_protein, start_pos = start_native, end_pos = end_native)
 
 # Do the same for the sarkisyan dataset - use the one after filtering unique Barcode > 1, because the lowest count in bright and dim is 2
-
 mutation_data_filtered$trimmed_protein <- sapply(mutation_data_filtered$protein, trim_protein, start_pos = start_wt, end_pos = end_wt)
-
 
 # Function to compare WT and mutant proteins
 find_mutations <- function(wt_seq, mut_seq) {
@@ -560,9 +481,9 @@ cat("Number of Mutations Observed in Sarkasiyan GFP Dataset and Bright-Dim Datas
 cat("Number of Unique Mutations in Sarkasiyan GFP Dataset:", length(unique_mutations_sar), "\n")
 cat("Number of Unique Mutations in Bright-Dim GFP Dataset:", length(unique_mutations_bd), "\n")
 
-```
+
 ## 4.3 Scatter plot to compare their averaged medianBrightness for variants present in both datasets
-```{r}
+
 # Filter sarkisyan dataset so that only sequences with mutations that are present in both datasets are shown
 mutation_data_expanded <- mutation_data_filtered %>%
   separate_rows(Mutations, sep = ",")%>%
@@ -577,11 +498,7 @@ common_mutations_df <- common_mutations_df %>%
             avg_brightness = mean(medianBrightness, na.rm=TRUE)) %>%
   ungroup()
 
-```
-
-
 ## 4.3 Plot average brightness vs. log(brigh/dim) for variants present in both datasets
-```{r}
 # Calculate log(bright/dim) ratio
 
 merged_data_bright_dim_filtered <- merge_bright_dim_datasets %>%
@@ -627,10 +544,8 @@ ggplot(merged_df, aes(y = avg_brightness, x = log_odds_ratio)) +
   ) +
   theme_minimal()
 
-```
+######## Task 5
 
-# Task 5
-```{r}
 # Read data
 abundance_data <- read.table("prism_mave_036_VKOR_abundance.txt", header = TRUE)
 activity_data <- read.table("prism_mave_035_VKOR_ab_activity.txt", header = TRUE)
@@ -648,8 +563,7 @@ ggplot(abundance_activity_merged_data, aes(x = score_abundance, y = score_activi
   ) +
   theme_minimal()
   
-# Scatterplot of only variants listed in gnomAD
-
+# Scatterplot of only variants listed in gnomAD                                           
 # Function to convert 3-letter amino acid code to 1-letter code
 three_to_one <- function(aa) {
   aa_map <- c(
