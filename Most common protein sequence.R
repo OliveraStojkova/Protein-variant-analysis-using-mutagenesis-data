@@ -1,4 +1,5 @@
-## Determine the most common protein sequence that is not wild type and report the mutation(s) found in this sequence
+## Determine the most common protein sequence that is not wild type and report the mutation(s) found in this sequence in
+# <wt><pos><mutation> format, like A12P.
 # Filter out protein sequences
 non_wt_protein <- mutation_data[mutation_data$protein != wt_protein, ]
 
