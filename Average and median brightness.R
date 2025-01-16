@@ -95,6 +95,10 @@ single_mutants_df <- as.data.frame(single_mutantions)
 
 ### Compare the median brightness of single-mutation sequences to the averaged data
 
+# Compare the medianBrightness of those single-mutant sequences to the averaged data you created above. In the example
+# above that would mean comparing the brightness of the A23P single mutant protein to the average brightness over all proteins that
+# contain an A23P mutation.
+         
 # Merge the two dataframes 
 comparison_df <- single_mutants_df %>%
   merge(mutation_summary, by = "mutation") 
@@ -113,11 +117,7 @@ ggplot(comparison_df, aes(x = medianBrightness, y = avg_brightness)) +
   theme_minimal() 
 
 ### Compare the median brightness of single-mutation sequences to the averaged data - filtered for data with more than 1 unique barcode
-
-# Compare the medianBrightness of those single-mutant sequences to the averaged data you created above. In the example
-# above that would mean comparing the brightness of the A23P single mutant protein to the average brightness over all proteins that
-# contain an A23P mutation.
-
+        
 # Filter the data to only keep the data for sequences that have more than 1 unique barcode
 mutation_data_filtered <- mutation_data%>%
   filter(uniqueBarcodes > 1)
