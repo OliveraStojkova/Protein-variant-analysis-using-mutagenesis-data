@@ -1,4 +1,4 @@
-# Load GFP datasets
+# Load GFP datasets - will be used to compare with the GFP dataset used previously
 brightGFP_data <- read.table("bright_GFP_beads.counts", sep = "\t", stringsAsFactors = FALSE, , col.names = c("Counts", "Sequence"))
 dimGFP_data <- read.table("dim_GFP_beads.counts", sep = "\t", stringsAsFactors = FALSE, col.names = c("Counts", "Sequence"))
 
